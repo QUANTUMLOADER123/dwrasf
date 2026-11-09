@@ -35,6 +35,18 @@ jobs:
           Path('/tmp/game.js').write_text(html.split('<script>', 1)[1].split('</script>', 1)[0])
           PY
           node --check /tmp/game.js
+          node --check app/src/main/assets/locales.js
+          node - <<'NODE'
+          global.window = {};
+          require('./app/src/main/assets/locales.js');
+          const codes = Object.keys(window.GAME_LOCALES);
+          if (codes.length !== 34) throw new Error(`Expected 34 locales, got ${codes.length}`);
+          for (const [code, strings] of Object.entries(window.GAME_LOCALES)) {
+            if (Object.keys(strings).length !== 48 || Object.values(strings).some(value => !value)) {
+              throw new Error(`Incomplete translations for ${code}`);
+            }
+          }
+          NODE
       - name: Install Android 16 SDK
         run: |
           test -n "$ANDROID_HOME"
