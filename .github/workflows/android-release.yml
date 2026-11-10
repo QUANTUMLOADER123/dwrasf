@@ -88,11 +88,18 @@ jobs:
             cp app/build/outputs/bundle/release/*.aab release-files/PosleTebya.aab
             printf '%s\n' 'Release APK and AAB are signed with the stable Play upload key.' > release-files/BUILD-NOTES.txt
           else
-            cp app/build/outputs/apk/debug/*.apk release-files/PosleTebya-test.apk
-            cp app/build/outputs/apk/release/*.apk release-files/PosleTebya-release-unsigned.apk
+            cp app/build/outputs/apk/debug/*.apk release-files/PosleTebya.apk
             cp app/build/outputs/bundle/release/*.aab release-files/PosleTebya-release-unsigned.aab
-            printf '%s\n' 'No GitHub signing secrets are configured. The test APK is debug-signed; release APK/AAB are unsigned and cannot be uploaded to Google Play. Configure ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD to publish signed production packages.' > release-files/BUILD-NOTES.txt
+            printf '%s\n' 'PosleTebya.apk is the installable debug-signed test build. It is not for Google Play. The unsigned AAB also cannot be uploaded. Configure ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD to create a signed Play release.' > release-files/BUILD-NOTES.txt
           fi
+      - name: Verify installable APK
+        run: |
+          APK=release-files/PosleTebya.apk
+          unzip -t "$APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > /tmp/apk-badging.txt
+          grep -q "package: name='com.quantumloader123.afterglow" /tmp/apk-badging.txt
+          head -n 2 /tmp/apk-badging.txt
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
